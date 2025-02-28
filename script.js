@@ -1,6 +1,7 @@
 let roleOptions = ['Werwolf', 'Bürger', 'Wahrsager', 'Hexe', 'Jäger'];
 let players = [];
 let roles = {};
+let currentPlayerIndex = 0;
 
 function setupRoleSelection() {
     let roleSelectionDiv = document.getElementById('role-selection');
@@ -73,14 +74,13 @@ function startGame() {
         players.push({ id: i + 1, role: assignedRoles[i], eliminated: false });
     }
 
+    currentPlayerIndex = 0;  // Setze Spielerindex zurück
     saveGameState();  // Spielstand speichern
 
     document.getElementById('setup-screen').style.display = 'none';
     document.getElementById('game-screen').style.display = 'block';
     updatePlayerView();
 }
-
-let currentPlayerIndex = 0;
 
 function updatePlayerView() {
     if (currentPlayerIndex >= players.length) {
@@ -94,6 +94,8 @@ function updatePlayerView() {
     document.getElementById('role-display').style.display = 'none';
     document.querySelector("button[onclick='hideRole()']").style.display = 'none';
     document.querySelector("button[onclick='revealRole()']").style.display = 'block';
+
+    saveGameState();  // Spielstand speichern
 }
 
 function revealRole() {
@@ -101,6 +103,8 @@ function revealRole() {
     document.getElementById('role-display').style.display = 'block';
     document.querySelector("button[onclick='hideRole()']").style.display = 'block';
     document.querySelector("button[onclick='revealRole()']").style.display = 'none';
+
+    saveGameState();  // Spielstand speichern
 }
 
 function hideRole() {

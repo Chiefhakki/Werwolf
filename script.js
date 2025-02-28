@@ -26,6 +26,8 @@ function setupRoleSelection() {
     totalCount.id = 'total-role-count';
     totalCount.innerText = 'Gesamt gewählte Rollen: 0';
     roleSelectionDiv.appendChild(totalCount);
+
+    loadGameState();  // Lade gespeicherten Spielstand beim Start
 }
 
 function updateRoleCount() {
@@ -71,6 +73,8 @@ function startGame() {
         players.push({ id: i + 1, role: assignedRoles[i], eliminated: false });
     }
 
+    saveGameState();  // Spielstand speichern
+
     document.getElementById('setup-screen').style.display = 'none';
     document.getElementById('game-screen').style.display = 'block';
     updatePlayerView();
@@ -101,6 +105,7 @@ function revealRole() {
 
 function hideRole() {
     currentPlayerIndex++;
+    saveGameState();  // Spielstand speichern
     updatePlayerView();
 }
 
@@ -121,17 +126,46 @@ function displayAdminView() {
         }
         list.appendChild(li);
     });
+
+    saveGameState();  // Spielstand speichern
 }
 
 function toggleElimination(id) {
     players = players.map(player => 
         player.id === id ? { ...player, eliminated: !player.eliminated } : player
     );
+    saveGameState();  // Spielstand speichern
     displayAdminView();
 }
 
 function resetGame() {
+    localStorage.removeItem("werwolfGameState");  // Spielstand löschen
     location.reload();
+}
+
+function saveGameState() {
+    localStorage.setItem("werwolfGameState", JSON.stringify({
+        players,
+        currentPlayerIndex
+    }));
+}
+
+function loadGameState() {
+    let savedState = localStorage.getItem("werwolfGameState");
+    if (savedState) {
+        let gameState = JSON.parse(savedState);
+        players = gameState.players;
+        currentPlayerIndex = gameState.currentPlayerIndex;
+
+        document.getElementById('setup-screen').style.display = 'none';
+        if (currentPlayerIndex >= players.length) {
+            document.getElementById('admin-screen').style.display = 'block';
+            displayAdminView();
+        } else {
+            document.getElementById('game-screen').style.display = 'block';
+            updatePlayerView();
+        }
+    }
 }
 
 document.addEventListener("DOMContentLoaded", setupRoleSelection);

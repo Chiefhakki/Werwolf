@@ -157,10 +157,29 @@ function collapsePlayerView() {
     displayAdminView();
 }
 
+
 function toggleElimination(id) {
-    players = players.map(player => 
-        player.id === id ? { ...player, eliminated: !player.eliminated } : player
-    );
+    let player = players.find(p => p.id === id);
+    let newState = !player.eliminated;
+
+    // Spiele den passenden Sound nur, wenn die Rolle eliminiert wird
+    if (newState) {
+        let audio = null;
+        if (player.role === "Werwolf") {
+            audio = document.getElementById("wolfSound");
+        } else if (player.role === "Jäger") {
+            audio = document.getElementById("jaegerSound");
+        } else if (player.role === "Bürger" || player.role === "Hexe" || player.role === "Wahrsager") {
+            audio = document.getElementById("menschenSound");
+        }
+        if (audio) {
+            audio.currentTime = 0;  // Setzt den Sound auf den Start zurück
+            audio.volume = 1.0;  // Maximale Lautstärke sicherstellen
+            audio.play().catch(error => console.error('Sound konnte nicht abgespielt werden:', error));
+        }
+    }
+
+    players = players.map(p => p.id === id ? { ...p, eliminated: newState } : p);
     saveGameState();
     displayAdminView();
 }

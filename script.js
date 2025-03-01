@@ -2,6 +2,7 @@ let roleOptions = ['Werwolf', 'Bürger', 'Wahrsager', 'Hexe', 'Jäger'];
 let players = [];
 let roles = {};
 let currentPlayerIndex = 0;
+let expandedPlayer = null;  // Speichert den aktuell vergrößerten Spieler
 
 function setupRoleSelection() {
     let roleSelectionDiv = document.getElementById('role-selection');
@@ -23,12 +24,7 @@ function setupRoleSelection() {
         roleSelectionDiv.appendChild(document.createElement('br'));
     });
 
-    let totalCount = document.createElement('p');
-    totalCount.id = 'total-role-count';
-    totalCount.innerText = 'Gesamt gewählte Rollen: 0';
-    roleSelectionDiv.appendChild(totalCount);
-
-    loadGameState();  // Lade gespeicherten Spielstand beim Start
+    loadGameState();
 }
 
 function updateRoleCount() {
@@ -36,16 +32,10 @@ function updateRoleCount() {
     roleOptions.forEach(role => {
         total += parseInt(document.getElementById(`role-${role.replace(' ', '-')}`).value) || 0;
     });
-    document.getElementById('total-role-count').innerText = `Gesamt gewählte Rollen: ${total}`;
+    document.getElementById('total-role-count').innerText = `Anzahl Spieler: ${total}`;
 }
 
 function startGame() {
-    let numPlayers = parseInt(document.getElementById('players').value);
-    if (numPlayers < 3) {
-        alert('Mindestens 3 Spieler erforderlich');
-        return;
-    }
-
     players = [];
     roles = {};
 
@@ -56,8 +46,8 @@ function startGame() {
         totalRoles += count;
     });
 
-    if (totalRoles !== numPlayers) {
-        alert('Die Anzahl der Rollen muss genau der Anzahl der Spieler entsprechen!');
+    if (totalRoles < 3) {
+        alert('Mindestens 3 Rollen erforderlich!');
         return;
     }
 
@@ -70,12 +60,13 @@ function startGame() {
 
     assignedRoles = assignedRoles.sort(() => Math.random() - 0.5);
 
-    for (let i = 0; i < numPlayers; i++) {
+    for (let i = 0; i < totalRoles; i++) {
         players.push({ id: i + 1, role: assignedRoles[i], eliminated: false });
     }
 
-    currentPlayerIndex = 0;  // Setze Spielerindex zurück
-    saveGameState();  // Spielstand speichern
+    currentPlayerIndex = 0;
+    expandedPlayer = null;  // Setze vergrößerte Ansicht zurück
+    saveGameState();  
 
     document.getElementById('setup-screen').style.display = 'none';
     document.getElementById('game-screen').style.display = 'block';
@@ -95,7 +86,7 @@ function updatePlayerView() {
     document.querySelector("button[onclick='hideRole()']").style.display = 'none';
     document.querySelector("button[onclick='revealRole()']").style.display = 'block';
 
-    saveGameState();  // Spielstand speichern
+    saveGameState();  
 }
 
 function revealRole() {
@@ -104,53 +95,86 @@ function revealRole() {
     document.querySelector("button[onclick='hideRole()']").style.display = 'block';
     document.querySelector("button[onclick='revealRole()']").style.display = 'none';
 
-    saveGameState();  // Spielstand speichern
+    saveGameState();  
 }
 
 function hideRole() {
     currentPlayerIndex++;
-    saveGameState();  // Spielstand speichern
+    saveGameState();  
     updatePlayerView();
 }
 
 function displayAdminView() {
-    let list = document.getElementById('player-list');
-    list.innerHTML = '';
+    let adminScreen = document.getElementById('admin-screen');
+    adminScreen.innerHTML = `
+        <h2>Spielübersicht</h2>
+        <div id="player-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; text-align: center;"></div>
+        <button onclick="resetGame()">Neues Spiel</button>
+    `;
+
+    let grid = document.getElementById('player-grid');
+    grid.innerHTML = '';
 
     players.forEach(player => {
-        let li = document.createElement('li');
-        li.innerHTML = `Spieler ${player.id}: ${player.role} 
-            <button onclick="toggleElimination(${player.id})">
+        let div = document.createElement('div');
+        div.style.border = "1px solid black";
+        div.style.padding = "10px";
+        div.style.backgroundColor = "#f9f9f9";
+
+        if (player.eliminated) {
+            div.style.textDecoration = "line-through";
+            div.style.color = "gray";
+        }
+
+        div.innerHTML = `Spieler ${player.id}: ${player.role} <br>
+            <button onclick="expandPlayerView(${player.id})">
                 ${player.eliminated ? 'Wiederherstellen' : 'Eliminieren'}
             </button>`;
 
-        if (player.eliminated) {
-            li.style.textDecoration = "line-through";
-            li.style.color = "gray";
-        }
-        list.appendChild(li);
+        grid.appendChild(div);
     });
 
-    saveGameState();  // Spielstand speichern
+    saveGameState();
+}
+
+function expandPlayerView(id) {
+    expandedPlayer = id;
+    let player = players.find(p => p.id === expandedPlayer);
+    let adminScreen = document.getElementById('admin-screen');
+    
+    adminScreen.innerHTML = `
+        <h2 style="font-size: 32px; color: red;">Spieler ${player.id} wurde eliminiert!</h2>
+        <p style="font-size: 28px; font-weight: bold;">Rolle: ${player.role}</p>
+        <button onclick="toggleElimination(${player.id})" style="font-size: 24px; padding: 10px;">
+            ${player.eliminated ? 'Wiederherstellen' : 'Eliminieren'}
+        </button>
+        <button onclick="collapsePlayerView()" style="font-size: 24px; padding: 10px;">Zurück zur Übersicht</button>
+    `;
+}
+
+function collapsePlayerView() {
+    expandedPlayer = null;
+    displayAdminView();
 }
 
 function toggleElimination(id) {
     players = players.map(player => 
         player.id === id ? { ...player, eliminated: !player.eliminated } : player
     );
-    saveGameState();  // Spielstand speichern
+    saveGameState();
     displayAdminView();
 }
 
 function resetGame() {
-    localStorage.removeItem("werwolfGameState");  // Spielstand löschen
+    localStorage.removeItem("werwolfGameState");
     location.reload();
 }
 
 function saveGameState() {
     localStorage.setItem("werwolfGameState", JSON.stringify({
         players,
-        currentPlayerIndex
+        currentPlayerIndex,
+        expandedPlayer
     }));
 }
 
@@ -160,15 +184,11 @@ function loadGameState() {
         let gameState = JSON.parse(savedState);
         players = gameState.players;
         currentPlayerIndex = gameState.currentPlayerIndex;
+        expandedPlayer = gameState.expandedPlayer || null;
 
         document.getElementById('setup-screen').style.display = 'none';
-        if (currentPlayerIndex >= players.length) {
-            document.getElementById('admin-screen').style.display = 'block';
-            displayAdminView();
-        } else {
-            document.getElementById('game-screen').style.display = 'block';
-            updatePlayerView();
-        }
+        document.getElementById('admin-screen').style.display = 'block';
+        displayAdminView();
     }
 }
 

@@ -162,20 +162,24 @@ function toggleElimination(id) {
     let player = players.find(p => p.id === id);
     let newState = !player.eliminated;
 
-    // Spiele den passenden Sound nur, wenn die Rolle eliminiert wird
+    // Sound nur abspielen, wenn der Spieler eliminiert wird und der Benutzer interagiert hat
     if (newState) {
         let audio = null;
         if (player.role === "Werwolf") {
             audio = document.getElementById("wolfSound");
         } else if (player.role === "Jäger") {
             audio = document.getElementById("jaegerSound");
-        } else if (player.role === "Bürger" || player.role === "Hexe" || player.role === "Wahrsager") {
+        } else if (["Bürger", "Hexe", "Wahrsager"].includes(player.role)) {
             audio = document.getElementById("menschenSound");
         }
+
         if (audio) {
-            audio.currentTime = 0;  // Setzt den Sound auf den Start zurück
-            audio.volume = 1.0;  // Maximale Lautstärke sicherstellen
-            audio.play().catch(error => console.error('Sound konnte nicht abgespielt werden:', error));
+            audio.currentTime = 0; // Setzt den Sound auf den Anfang zurück
+            audio.volume = 1.0; // Maximale Lautstärke sicherstellen
+            let playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => console.error('Sound konnte nicht abgespielt werden:', error));
+            }
         }
     }
 

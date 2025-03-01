@@ -127,7 +127,7 @@ function displayAdminView() {
         }
 
         div.innerHTML = `Spieler ${player.id}: ${player.role} <br>
-            <button onclick="expandPlayerView(${player.id})">
+            <button onclick="expandPlayerView(${player.id})" style="width: 100%; font-size: 14px; padding: 5px; margin-top: 5px;">
                 ${player.eliminated ? 'Wiederherstellen' : 'Eliminieren'}
             </button>`;
 
@@ -145,10 +145,10 @@ function expandPlayerView(id) {
     adminScreen.innerHTML = `
         <h2 style="font-size: 32px; color: red;">Spieler ${player.id} wurde eliminiert!</h2>
         <p style="font-size: 28px; font-weight: bold;">Rolle: ${player.role}</p>
-        <button onclick="toggleElimination(${player.id})" style="font-size: 24px; padding: 10px;">
+        <button onclick="toggleElimination(${player.id})" style="width: 100%; font-size: 18px; padding: 8px; margin-top: 10px;">
             ${player.eliminated ? 'Wiederherstellen' : 'Eliminieren'}
         </button>
-        <button onclick="collapsePlayerView()" style="font-size: 24px; padding: 10px;">Zurück zur Übersicht</button>
+        <button onclick="collapsePlayerView()" style="width: 100%; font-size: 18px; padding: 8px; margin-top: 10px;">Zurück zur Übersicht</button>
     `;
 }
 
